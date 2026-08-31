@@ -4,6 +4,7 @@ public class Ville {
 
     private String nom;
     private String population;
+    private int id;
 
     public Ville() {
     }
@@ -27,6 +28,14 @@ public class Ville {
 
     public void setPopulation(String population) {
         this.population = population;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
 }
