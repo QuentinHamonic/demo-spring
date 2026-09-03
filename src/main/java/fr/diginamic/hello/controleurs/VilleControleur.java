@@ -2,8 +2,9 @@ package fr.diginamic.hello.controleurs;
 
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +24,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/villes")
@@ -34,9 +36,15 @@ public class VilleControleur {
         this.villeService = villeService;
     }
 
+    @Operation(summary = "Retourne la liste de toutes les villes")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",
+                    description = "Liste des villes au format JSON",
+                    content = { @Content(mediaType = "application/json", schema = @Schema(implementation = Ville.class)) })
+    })
     @GetMapping
     public List<Ville> getVilles() {
-        return villeService.getVilles();
+        return villeService.extractVilles();
     }
 
     @Operation(summary = "Retourne une ville à partir de son identifiant")
@@ -44,62 +52,76 @@ public class VilleControleur {
             @ApiResponse(responseCode = "200",
                     description = "Ville au format JSON",
                     content = { @Content(mediaType = "application/json", schema = @Schema(implementation = Ville.class)) }),
-            @ApiResponse(responseCode = "404", description = "Ville non trouvée", content = @Content())
+            @ApiResponse(responseCode = "400", description = "Ville non trouvée", content = @Content())
     })
     @GetMapping("/{id}")
-    public ResponseEntity<Ville> getVille(
-            @Parameter(description = "Identifiant de la ville à récupérer", example = "1", required = true) @PathVariable int id) {
-        Ville ville = villeService.getVilleById(id);
-        if (ville == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(ville);
+    public Ville getVilleParId(
+            @Parameter(description = "Identifiant de la ville à récupérer", example = "1", required = true) @PathVariable int id)
+            throws VilleException {
+        return villeService.extractVille(id);
+    }
+
+    @Operation(summary = "Retourne une ville à partir de son nom exact")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",
+                    description = "Ville au format JSON",
+                    content = { @Content(mediaType = "application/json", schema = @Schema(implementation = Ville.class)) }),
+            @ApiResponse(responseCode = "400", description = "Ville non trouvée", content = @Content())
+    })
+    @GetMapping("/nom/{nom}")
+    public Ville getVilleParNom(
+            @Parameter(description = "Nom exact de la ville à récupérer", example = "Nice", required = true) @PathVariable String nom)
+            throws VilleException {
+        return villeService.extractVille(nom);
     }
 
     @Operation(summary = "Crée une nouvelle ville")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Ville insérée avec succès", content = @Content()),
+            @ApiResponse(responseCode = "200",
+                    description = "Liste des villes après insertion",
+                    content = { @Content(mediaType = "application/json", schema = @Schema(implementation = Ville.class)) }),
             @ApiResponse(responseCode = "400", description = "Ville invalide ou déjà existante", content = @Content())
     })
     @PostMapping
-    public ResponseEntity<String> insertVille(
-            @Parameter(description = "Ville à créer", required = true) @RequestBody Ville nouvelleVille) throws VilleException {
-        Ville villeInseree = villeService.insertVille(nouvelleVille);
-        if (villeInseree == null) {
-            return ResponseEntity.badRequest().body("La ville existe déjà");
+    public ResponseEntity<List<Ville>> insertVille(
+            @Parameter(description = "Ville à créer", required = true) @Valid @RequestBody Ville nouvelleVille,
+            BindingResult bindingResult) throws VilleException {
+        if (bindingResult.hasErrors()) {
+            throw new VilleException(construireMessageErreurs(bindingResult));
         }
-        return ResponseEntity.ok("Ville insérée avec succès");
+        return ResponseEntity.ok(villeService.insertVille(nouvelleVille));
     }
 
     @Operation(summary = "Modifie une ville existante à partir de son identifiant")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Ville modifiée avec succès", content = @Content()),
-            @ApiResponse(responseCode = "400", description = "Ville invalide", content = @Content()),
-            @ApiResponse(responseCode = "404", description = "Ville non trouvée", content = @Content())
+            @ApiResponse(responseCode = "200",
+                    description = "Liste des villes après modification",
+                    content = { @Content(mediaType = "application/json", schema = @Schema(implementation = Ville.class)) }),
+            @ApiResponse(responseCode = "400", description = "Ville invalide ou non trouvée", content = @Content())
     })
     @PutMapping("/{id}")
-    public ResponseEntity<String> updateVille(
+    public ResponseEntity<List<Ville>> updateVille(
             @Parameter(description = "Identifiant de la ville à modifier", example = "1", required = true) @PathVariable int id,
-            @Parameter(description = "Nouvelles données de la ville", required = true) @RequestBody Ville villeModifiee)
-            throws VilleException {
-        if (!villeService.updateVille(id, villeModifiee)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Ville introuvable");
+            @Parameter(description = "Nouvelles données de la ville", required = true) @Valid @RequestBody Ville villeModifiee,
+            BindingResult bindingResult) throws VilleException {
+        if (bindingResult.hasErrors()) {
+            throw new VilleException(construireMessageErreurs(bindingResult));
         }
-        return ResponseEntity.ok("Ville modifiée avec succès");
+        return ResponseEntity.ok(villeService.modifierVille(id, villeModifiee));
     }
 
     @Operation(summary = "Supprime une ville à partir de son identifiant")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Ville supprimée avec succès", content = @Content()),
-            @ApiResponse(responseCode = "404", description = "Ville non trouvée", content = @Content())
+            @ApiResponse(responseCode = "200",
+                    description = "Liste des villes après suppression",
+                    content = { @Content(mediaType = "application/json", schema = @Schema(implementation = Ville.class)) }),
+            @ApiResponse(responseCode = "400", description = "Ville non trouvée", content = @Content())
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteVille(
-            @Parameter(description = "Identifiant de la ville à supprimer", example = "1", required = true) @PathVariable int id) {
-        if (!villeService.deleteVille(id)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Ville introuvable");
-        }
-        return ResponseEntity.ok("Ville supprimée avec succès");
+    public ResponseEntity<List<Ville>> deleteVille(
+            @Parameter(description = "Identifiant de la ville à supprimer", example = "1", required = true) @PathVariable int id)
+            throws VilleException {
+        return ResponseEntity.ok(villeService.supprimerVille(id));
     }
 
     @GetMapping("/recherche/nom/{nom}")
@@ -114,6 +136,14 @@ public class VilleControleur {
             return villeService.getVillesParPopulationMin(min);
         }
         return villeService.getVillesParPopulationEntre(min, max);
+    }
+
+    private String construireMessageErreurs(BindingResult bindingResult) {
+        StringBuilder message = new StringBuilder();
+        for (FieldError erreur : bindingResult.getFieldErrors()) {
+            message.append(erreur.getField()).append(" : ").append(erreur.getDefaultMessage()).append(". ");
+        }
+        return message.toString().trim();
     }
 
 }
