@@ -1,0 +1,89 @@
+package fr.diginamic.hello.services;
+
+import java.util.List;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+
+import fr.diginamic.hello.Departement;
+import fr.diginamic.hello.dto.VilleDto;
+import fr.diginamic.hello.dto.VilleMapper;
+import fr.diginamic.hello.exceptions.DepartementException;
+import fr.diginamic.hello.repositories.DepartementRepository;
+import fr.diginamic.hello.repositories.VilleRepository;
+
+@Service
+public class DepartementService {
+
+    private final DepartementRepository departementRepository;
+
+    private final VilleRepository villeRepository;
+
+    public DepartementService(DepartementRepository departementRepository, VilleRepository villeRepository) {
+        this.departementRepository = departementRepository;
+        this.villeRepository = villeRepository;
+    }
+
+    public List<Departement> extractDepartements() {
+        return departementRepository.findAll();
+    }
+
+    public Departement extractDepartement(int idDepartement) throws DepartementException {
+        return trouverDepartementParId(idDepartement);
+    }
+
+    public List<Departement> insertDepartement(Departement departement) throws DepartementException {
+        validerDepartement(departement);
+        departement.setId(0);
+        departementRepository.save(departement);
+        return departementRepository.findAll();
+    }
+
+    public List<Departement> modifierDepartement(int idDepartement, Departement departementModifie) throws DepartementException {
+        validerDepartement(departementModifie);
+        Departement departement = trouverDepartementParId(idDepartement);
+        departement.setCode(departementModifie.getCode());
+        departement.setNom(departementModifie.getNom());
+        departementRepository.save(departement);
+        return departementRepository.findAll();
+    }
+
+    public List<Departement> supprimerDepartement(int idDepartement) throws DepartementException {
+        Departement departement = trouverDepartementParId(idDepartement);
+        departementRepository.delete(departement);
+        return departementRepository.findAll();
+    }
+
+    public List<VilleDto> topNVilles(int idDepartement, int n) throws DepartementException {
+        trouverDepartementParId(idDepartement);
+        return villeRepository.findByDepartementIdOrderByPopulationDesc(idDepartement, PageRequest.of(0, n))
+                .stream().map(VilleMapper::toDto).toList();
+    }
+
+    public List<VilleDto> villesParPopulationMin(int idDepartement, int min) throws DepartementException {
+        trouverDepartementParId(idDepartement);
+        return villeRepository.findByDepartementIdAndPopulationGreaterThanOrderByPopulationDesc(idDepartement, min)
+                .stream().map(VilleMapper::toDto).toList();
+    }
+
+    public List<VilleDto> villesParPopulation(int idDepartement, int min, int max) throws DepartementException {
+        trouverDepartementParId(idDepartement);
+        return villeRepository.findByDepartementIdAndPopulationGreaterThanAndPopulationLessThanOrderByPopulationDesc(idDepartement, min,
+                max).stream().map(VilleMapper::toDto).toList();
+    }
+
+    private Departement trouverDepartementParId(int idDepartement) throws DepartementException {
+        return departementRepository.findById(idDepartement)
+                .orElseThrow(() -> new DepartementException("Département introuvable"));
+    }
+
+    private void validerDepartement(Departement departement) throws DepartementException {
+        if (departement.getCode() == null || departement.getCode().isBlank()) {
+            throw new DepartementException("Le code du département est obligatoire");
+        }
+        if (departement.getNom() == null || departement.getNom().isBlank()) {
+            throw new DepartementException("Le nom du département est obligatoire");
+        }
+    }
+
+}

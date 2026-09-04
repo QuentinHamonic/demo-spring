@@ -2,6 +2,9 @@ package fr.diginamic.hello.controleurs;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -15,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import fr.diginamic.hello.Ville;
+import fr.diginamic.hello.dto.VilleDto;
 import fr.diginamic.hello.exceptions.VilleException;
 import fr.diginamic.hello.services.VilleService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,26 +39,29 @@ public class VilleControleur {
         this.villeService = villeService;
     }
 
-    @Operation(summary = "Retourne la liste de toutes les villes")
+    @Operation(summary = "Retourne la liste des villes, paginée")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200",
-                    description = "Liste des villes au format JSON",
-                    content = { @Content(mediaType = "application/json", schema = @Schema(implementation = Ville.class)) })
+                    description = "Page de villes au format JSON",
+                    content = { @Content(mediaType = "application/json", schema = @Schema(implementation = VilleDto.class)) })
     })
     @GetMapping
-    public List<Ville> getVilles() {
-        return villeService.extractVilles();
+    public Page<VilleDto> getVilles(
+            @Parameter(description = "Numéro de page (0-indexé)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Taille de la page") @RequestParam(defaultValue = "20") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return villeService.extractVilles(pageable);
     }
 
     @Operation(summary = "Retourne une ville à partir de son identifiant")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200",
                     description = "Ville au format JSON",
-                    content = { @Content(mediaType = "application/json", schema = @Schema(implementation = Ville.class)) }),
+                    content = { @Content(mediaType = "application/json", schema = @Schema(implementation = VilleDto.class)) }),
             @ApiResponse(responseCode = "400", description = "Ville non trouvée", content = @Content())
     })
     @GetMapping("/{id}")
-    public Ville getVilleParId(
+    public VilleDto getVilleParId(
             @Parameter(description = "Identifiant de la ville à récupérer", example = "1", required = true) @PathVariable int id)
             throws VilleException {
         return villeService.extractVille(id);
@@ -65,11 +71,11 @@ public class VilleControleur {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200",
                     description = "Ville au format JSON",
-                    content = { @Content(mediaType = "application/json", schema = @Schema(implementation = Ville.class)) }),
+                    content = { @Content(mediaType = "application/json", schema = @Schema(implementation = VilleDto.class)) }),
             @ApiResponse(responseCode = "400", description = "Ville non trouvée", content = @Content())
     })
     @GetMapping("/nom/{nom}")
-    public Ville getVilleParNom(
+    public VilleDto getVilleParNom(
             @Parameter(description = "Nom exact de la ville à récupérer", example = "Nice", required = true) @PathVariable String nom)
             throws VilleException {
         return villeService.extractVille(nom);
@@ -79,12 +85,12 @@ public class VilleControleur {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200",
                     description = "Liste des villes après insertion",
-                    content = { @Content(mediaType = "application/json", schema = @Schema(implementation = Ville.class)) }),
-            @ApiResponse(responseCode = "400", description = "Ville invalide ou déjà existante", content = @Content())
+                    content = { @Content(mediaType = "application/json", schema = @Schema(implementation = VilleDto.class)) }),
+            @ApiResponse(responseCode = "400", description = "Ville invalide, déjà existante ou département inconnu", content = @Content())
     })
     @PostMapping
-    public ResponseEntity<List<Ville>> insertVille(
-            @Parameter(description = "Ville à créer", required = true) @Valid @RequestBody Ville nouvelleVille,
+    public ResponseEntity<List<VilleDto>> insertVille(
+            @Parameter(description = "Ville à créer", required = true) @Valid @RequestBody VilleDto nouvelleVille,
             BindingResult bindingResult) throws VilleException {
         if (bindingResult.hasErrors()) {
             throw new VilleException(construireMessageErreurs(bindingResult));
@@ -96,13 +102,13 @@ public class VilleControleur {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200",
                     description = "Liste des villes après modification",
-                    content = { @Content(mediaType = "application/json", schema = @Schema(implementation = Ville.class)) }),
-            @ApiResponse(responseCode = "400", description = "Ville invalide ou non trouvée", content = @Content())
+                    content = { @Content(mediaType = "application/json", schema = @Schema(implementation = VilleDto.class)) }),
+            @ApiResponse(responseCode = "400", description = "Ville invalide, non trouvée ou département inconnu", content = @Content())
     })
     @PutMapping("/{id}")
-    public ResponseEntity<List<Ville>> updateVille(
+    public ResponseEntity<List<VilleDto>> updateVille(
             @Parameter(description = "Identifiant de la ville à modifier", example = "1", required = true) @PathVariable int id,
-            @Parameter(description = "Nouvelles données de la ville", required = true) @Valid @RequestBody Ville villeModifiee,
+            @Parameter(description = "Nouvelles données de la ville", required = true) @Valid @RequestBody VilleDto villeModifiee,
             BindingResult bindingResult) throws VilleException {
         if (bindingResult.hasErrors()) {
             throw new VilleException(construireMessageErreurs(bindingResult));
@@ -114,23 +120,23 @@ public class VilleControleur {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200",
                     description = "Liste des villes après suppression",
-                    content = { @Content(mediaType = "application/json", schema = @Schema(implementation = Ville.class)) }),
+                    content = { @Content(mediaType = "application/json", schema = @Schema(implementation = VilleDto.class)) }),
             @ApiResponse(responseCode = "400", description = "Ville non trouvée", content = @Content())
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<List<Ville>> deleteVille(
+    public ResponseEntity<List<VilleDto>> deleteVille(
             @Parameter(description = "Identifiant de la ville à supprimer", example = "1", required = true) @PathVariable int id)
             throws VilleException {
         return ResponseEntity.ok(villeService.supprimerVille(id));
     }
 
     @GetMapping("/recherche/nom/{nom}")
-    public List<Ville> getVillesParNom(@PathVariable String nom) throws VilleException {
+    public List<VilleDto> getVillesParNom(@PathVariable String nom) throws VilleException {
         return villeService.getVillesParNom(nom);
     }
 
     @GetMapping("/recherche/population")
-    public List<Ville> getVillesParPopulation(@RequestParam int min,
+    public List<VilleDto> getVillesParPopulation(@RequestParam int min,
             @RequestParam(required = false) Integer max) throws VilleException {
         if (max == null) {
             return villeService.getVillesParPopulationMin(min);

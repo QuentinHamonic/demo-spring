@@ -1,5 +1,6 @@
 package fr.diginamic.hello;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -22,10 +23,11 @@ public class Ville {
     private String nom;
 
     @Min(1)
+    @Column(name = "nb_habs")
     private int population;
 
     @ManyToOne
-    @JoinColumn(name = "departement_id")
+    @JoinColumn(name = "id_dept")
     private Departement departement;
 
     public Ville() {
