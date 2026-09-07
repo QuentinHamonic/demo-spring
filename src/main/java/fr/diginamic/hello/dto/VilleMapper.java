@@ -1,14 +1,14 @@
 package fr.diginamic.hello.dto;
 
+import org.springframework.stereotype.Component;
+
 import fr.diginamic.hello.Departement;
 import fr.diginamic.hello.Ville;
 
+@Component
 public class VilleMapper {
 
-    private VilleMapper() {
-    }
-
-    public static VilleDto toDto(Ville ville) {
+    public VilleDto toDto(Ville ville) {
         VilleDto dto = new VilleDto();
         dto.setId(ville.getId());
         dto.setNom(ville.getNom());

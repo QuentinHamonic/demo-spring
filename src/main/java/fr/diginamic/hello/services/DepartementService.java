@@ -19,9 +19,12 @@ public class DepartementService {
 
     private final VilleRepository villeRepository;
 
-    public DepartementService(DepartementRepository departementRepository, VilleRepository villeRepository) {
+    private final VilleMapper villeMapper;
+
+    public DepartementService(DepartementRepository departementRepository, VilleRepository villeRepository, VilleMapper villeMapper) {
         this.departementRepository = departementRepository;
         this.villeRepository = villeRepository;
+        this.villeMapper = villeMapper;
     }
 
     public List<Departement> extractDepartements() {
@@ -57,19 +60,19 @@ public class DepartementService {
     public List<VilleDto> topNVilles(int idDepartement, int n) throws DepartementException {
         trouverDepartementParId(idDepartement);
         return villeRepository.findByDepartementIdOrderByPopulationDesc(idDepartement, PageRequest.of(0, n))
-                .stream().map(VilleMapper::toDto).toList();
+                .stream().map(villeMapper::toDto).toList();
     }
 
     public List<VilleDto> villesParPopulationMin(int idDepartement, int min) throws DepartementException {
         trouverDepartementParId(idDepartement);
         return villeRepository.findByDepartementIdAndPopulationGreaterThanOrderByPopulationDesc(idDepartement, min)
-                .stream().map(VilleMapper::toDto).toList();
+                .stream().map(villeMapper::toDto).toList();
     }
 
     public List<VilleDto> villesParPopulation(int idDepartement, int min, int max) throws DepartementException {
         trouverDepartementParId(idDepartement);
         return villeRepository.findByDepartementIdAndPopulationGreaterThanAndPopulationLessThanOrderByPopulationDesc(idDepartement, min,
-                max).stream().map(VilleMapper::toDto).toList();
+                max).stream().map(villeMapper::toDto).toList();
     }
 
     public Departement extraireDepartementParCode(String code) throws DepartementException {

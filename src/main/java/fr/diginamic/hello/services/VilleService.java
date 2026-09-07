@@ -21,23 +21,26 @@ public class VilleService {
 
     private final DepartementRepository departementRepository;
 
-    public VilleService(VilleRepository villeRepository, DepartementRepository departementRepository) {
+    private final VilleMapper villeMapper;
+
+    public VilleService(VilleRepository villeRepository, DepartementRepository departementRepository, VilleMapper villeMapper) {
         this.villeRepository = villeRepository;
         this.departementRepository = departementRepository;
+        this.villeMapper = villeMapper;
     }
 
     public Page<VilleDto> extractVilles(Pageable pageable) {
-        return villeRepository.findAll(pageable).map(VilleMapper::toDto);
+        return villeRepository.findAll(pageable).map(villeMapper::toDto);
     }
 
     public VilleDto extractVille(int idVille) throws VilleException {
-        return VilleMapper.toDto(trouverVilleParId(idVille));
+        return villeMapper.toDto(trouverVilleParId(idVille));
     }
 
     public VilleDto extractVille(String nom) throws VilleException {
         Ville ville = villeRepository.findByNomIgnoreCase(nom)
                 .orElseThrow(() -> new VilleException("Ville introuvable"));
-        return VilleMapper.toDto(ville);
+        return villeMapper.toDto(ville);
     }
 
     public List<VilleDto> insertVille(VilleDto villeDto) throws VilleException {
@@ -133,7 +136,7 @@ public class VilleService {
     }
 
     private List<VilleDto> toDtoList(List<Ville> villes) {
-        return villes.stream().map(VilleMapper::toDto).toList();
+        return villes.stream().map(villeMapper::toDto).toList();
     }
 
 }
