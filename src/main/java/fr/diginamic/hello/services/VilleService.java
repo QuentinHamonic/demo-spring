@@ -93,6 +93,10 @@ public class VilleService {
         return toDtoList(villes);
     }
 
+    public List<VilleDto> getVillesParDepartementId(int idDepartement) {
+        return toDtoList(villeRepository.findByDepartementId(idDepartement));
+    }
+
     private Ville trouverVilleParId(int idVille) throws VilleException {
         return villeRepository.findById(idVille).orElseThrow(() -> new VilleException("Ville introuvable"));
     }

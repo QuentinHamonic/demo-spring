@@ -17,6 +17,8 @@ public class VilleDto {
 
     private String codeDepartement;
 
+    private String nomDepartement;
+
     private Integer idDepartement;
 
     public VilleDto() {
@@ -52,6 +54,14 @@ public class VilleDto {
 
     public void setCodeDepartement(String codeDepartement) {
         this.codeDepartement = codeDepartement;
+    }
+
+    public String getNomDepartement() {
+        return nomDepartement;
+    }
+
+    public void setNomDepartement(String nomDepartement) {
+        this.nomDepartement = nomDepartement;
     }
 
     public Integer getIdDepartement() {

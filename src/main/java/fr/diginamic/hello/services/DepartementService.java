@@ -72,6 +72,11 @@ public class DepartementService {
                 max).stream().map(VilleMapper::toDto).toList();
     }
 
+    public Departement extraireDepartementParCode(String code) throws DepartementException {
+        return departementRepository.findByCodeIgnoreCase(code)
+                .orElseThrow(() -> new DepartementException("Département introuvable"));
+    }
+
     private Departement trouverDepartementParId(int idDepartement) throws DepartementException {
         return departementRepository.findById(idDepartement)
                 .orElseThrow(() -> new DepartementException("Département introuvable"));

@@ -27,7 +27,10 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 @RestController
 @RequestMapping("/villes")
@@ -142,6 +145,24 @@ public class VilleControleur {
             return villeService.getVillesParPopulationMin(min);
         }
         return villeService.getVillesParPopulationEntre(min, max);
+    }
+
+    @Operation(summary = "Exporte au format CSV les villes dont la population est supérieure à min")
+    @GetMapping("/export/csv")
+    public void exportCsv(@RequestParam int min, HttpServletResponse response) throws VilleException, IOException {
+        List<VilleDto> villes = villeService.getVillesParPopulationMin(min);
+        response.setContentType("text/csv");
+        response.setCharacterEncoding("UTF-8");
+        response.setHeader("Content-Disposition", "attachment; filename=\"villes.csv\"");
+        PrintWriter writer = response.getWriter();
+        for (VilleDto ville : villes) {
+            writer.append(ville.getNom()).append(";")
+                    .append(String.valueOf(ville.getPopulation())).append(";")
+                    .append(ville.getCodeDepartement() == null ? "" : ville.getCodeDepartement()).append(";")
+                    .append(ville.getNomDepartement() == null ? "" : ville.getNomDepartement())
+                    .append("\n");
+        }
+        response.flushBuffer();
     }
 
     private String construireMessageErreurs(BindingResult bindingResult) {

@@ -25,4 +25,6 @@ public interface VilleRepository extends JpaRepository<Ville, Integer> {
 
     List<Ville> findByDepartementIdOrderByPopulationDesc(int idDepartement, Pageable pageable);
 
+    List<Ville> findByDepartementId(int idDepartement);
+
 }

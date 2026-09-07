@@ -17,6 +17,7 @@ public class VilleMapper {
         if (departement != null) {
             dto.setIdDepartement(departement.getId());
             dto.setCodeDepartement(departement.getCode());
+            dto.setNomDepartement(departement.getNom());
         }
         return dto;
     }
