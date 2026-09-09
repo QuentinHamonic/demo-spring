@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -48,6 +49,7 @@ public class VilleControleur {
                     description = "Page de villes au format JSON",
                     content = { @Content(mediaType = "application/json", schema = @Schema(implementation = VilleDto.class)) })
     })
+    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     @GetMapping
     public Page<VilleDto> getVilles(
             @Parameter(description = "Numéro de page (0-indexé)") @RequestParam(defaultValue = "0") int page,
@@ -63,6 +65,7 @@ public class VilleControleur {
                     content = { @Content(mediaType = "application/json", schema = @Schema(implementation = VilleDto.class)) }),
             @ApiResponse(responseCode = "400", description = "Ville non trouvée", content = @Content())
     })
+    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     @GetMapping("/{id}")
     public VilleDto getVilleParId(
             @Parameter(description = "Identifiant de la ville à récupérer", example = "1", required = true) @PathVariable int id)
@@ -77,6 +80,7 @@ public class VilleControleur {
                     content = { @Content(mediaType = "application/json", schema = @Schema(implementation = VilleDto.class)) }),
             @ApiResponse(responseCode = "400", description = "Ville non trouvée", content = @Content())
     })
+    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     @GetMapping("/nom/{nom}")
     public VilleDto getVilleParNom(
             @Parameter(description = "Nom exact de la ville à récupérer", example = "Nice", required = true) @PathVariable String nom)
@@ -91,6 +95,7 @@ public class VilleControleur {
                     content = { @Content(mediaType = "application/json", schema = @Schema(implementation = VilleDto.class)) }),
             @ApiResponse(responseCode = "400", description = "Ville invalide, déjà existante ou département inconnu", content = @Content())
     })
+    @Secured("ROLE_ADMIN")
     @PostMapping
     public ResponseEntity<List<VilleDto>> insertVille(
             @Parameter(description = "Ville à créer", required = true) @Valid @RequestBody VilleDto nouvelleVille,
@@ -108,6 +113,7 @@ public class VilleControleur {
                     content = { @Content(mediaType = "application/json", schema = @Schema(implementation = VilleDto.class)) }),
             @ApiResponse(responseCode = "400", description = "Ville invalide, non trouvée ou département inconnu", content = @Content())
     })
+    @Secured("ROLE_ADMIN")
     @PutMapping("/{id}")
     public ResponseEntity<List<VilleDto>> updateVille(
             @Parameter(description = "Identifiant de la ville à modifier", example = "1", required = true) @PathVariable int id,
@@ -126,6 +132,7 @@ public class VilleControleur {
                     content = { @Content(mediaType = "application/json", schema = @Schema(implementation = VilleDto.class)) }),
             @ApiResponse(responseCode = "400", description = "Ville non trouvée", content = @Content())
     })
+    @Secured("ROLE_ADMIN")
     @DeleteMapping("/{id}")
     public ResponseEntity<List<VilleDto>> deleteVille(
             @Parameter(description = "Identifiant de la ville à supprimer", example = "1", required = true) @PathVariable int id)
@@ -133,11 +140,13 @@ public class VilleControleur {
         return ResponseEntity.ok(villeService.supprimerVille(id));
     }
 
+    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     @GetMapping("/recherche/nom/{nom}")
     public List<VilleDto> getVillesParNom(@PathVariable String nom) throws VilleException {
         return villeService.getVillesParNom(nom);
     }
 
+    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     @GetMapping("/recherche/population")
     public List<VilleDto> getVillesParPopulation(@RequestParam int min,
             @RequestParam(required = false) Integer max) throws VilleException {
@@ -148,6 +157,7 @@ public class VilleControleur {
     }
 
     @Operation(summary = "Exporte au format CSV les villes dont la population est supérieure à min")
+    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     @GetMapping("/export/csv")
     public void exportCsv(@RequestParam int min, HttpServletResponse response) throws VilleException, IOException {
         List<VilleDto> villes = villeService.getVillesParPopulationMin(min);

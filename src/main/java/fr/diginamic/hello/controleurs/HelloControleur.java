@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import fr.diginamic.hello.services.HelloService;
 
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @RestController
@@ -17,6 +18,7 @@ public class HelloControleur {
         this.helloService = helloService;
     }
 
+    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     @GetMapping
     public String direHello() {
         return helloService.salutations();

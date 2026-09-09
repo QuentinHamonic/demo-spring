@@ -3,6 +3,7 @@ package fr.diginamic.hello.controleurs;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -48,24 +49,28 @@ public class DepartementControleur {
     }
 
     @Operation(summary = "Retourne la liste de tous les départements")
+    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     @GetMapping
     public List<Departement> getDepartements() {
         return departementService.extractDepartements();
     }
 
     @Operation(summary = "Retourne un département à partir de son identifiant")
+    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     @GetMapping("/{id}")
     public Departement getDepartement(@PathVariable int id) throws DepartementException {
         return departementService.extractDepartement(id);
     }
 
     @Operation(summary = "Crée un nouveau département")
+    @Secured("ROLE_ADMIN")
     @PostMapping
     public ResponseEntity<List<Departement>> insertDepartement(@RequestBody Departement departement) throws DepartementException {
         return ResponseEntity.ok(departementService.insertDepartement(departement));
     }
 
     @Operation(summary = "Modifie un département existant à partir de son identifiant")
+    @Secured("ROLE_ADMIN")
     @PutMapping("/{id}")
     public ResponseEntity<List<Departement>> updateDepartement(@PathVariable int id, @RequestBody Departement departement)
             throws DepartementException {
@@ -73,18 +78,21 @@ public class DepartementControleur {
     }
 
     @Operation(summary = "Supprime un département à partir de son identifiant")
+    @Secured("ROLE_ADMIN")
     @DeleteMapping("/{id}")
     public ResponseEntity<List<Departement>> deleteDepartement(@PathVariable int id) throws DepartementException {
         return ResponseEntity.ok(departementService.supprimerDepartement(id));
     }
 
     @Operation(summary = "Retourne les n plus grandes villes d'un département")
+    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     @GetMapping("/{id}/villes/top/{n}")
     public List<VilleDto> getTopNVilles(@PathVariable int id, @PathVariable int n) throws DepartementException {
         return departementService.topNVilles(id, n);
     }
 
     @Operation(summary = "Retourne les villes d'un département dont la population est supérieure à min, ou comprise entre min et max si max est fourni")
+    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     @GetMapping("/{id}/villes")
     public List<VilleDto> getVillesParPopulation(@PathVariable int id, @RequestParam int min,
             @RequestParam(required = false) Integer max) throws DepartementException {
@@ -95,6 +103,7 @@ public class DepartementControleur {
     }
 
     @Operation(summary = "Exporte au format PDF la fiche d'un département à partir de son code")
+    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     @GetMapping("/{code}/export/pdf")
     public void exportPdf(@PathVariable String code, HttpServletResponse response) throws Exception {
         Departement departement = departementService.extraireDepartementParCode(code);
